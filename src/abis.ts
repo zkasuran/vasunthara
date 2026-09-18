@@ -32,3 +32,20 @@ export const QUOTER_ABI = [
   "function quoteExactInputSingle(((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 exactAmount, bytes hookData) params) returns (uint256 amountOut, uint256 gasEstimate)",
   "function quoteExactOutputSingle(((address currency0, address currency1, uint24 fee, int24 tickSpacing, address hooks) poolKey, bool zeroForOne, uint128 exactAmount, bytes hookData) params) returns (uint256 amountIn, uint256 gasEstimate)",
 ] as const;
+
+// The PoolManager events, from Uniswap/v4-core IPoolManager.sol. `PoolId` is a
+// user-defined value type over bytes32, so it appears as bytes32 in the ABI.
+//
+// These are what an event-driven strategy subscribes to. Because `id` is the
+// first indexed parameter, a log filter on topic1 narrows to a single pool,
+// hook included.
+//
+// Verified live on Ethereum Sepolia 2026-09-18: the Swap topic0 computed from
+// this signature is
+// 0x40e9cecb9f5f1f1c5b9c97dec2917b7ee92e57ba5563708daca94dd84ad7112f and it
+// matches real PoolManager Swap logs at block 11530713 and later.
+export const POOL_MANAGER_EVENTS_ABI = [
+  "event Swap(bytes32 indexed id, address indexed sender, int128 amount0, int128 amount1, uint160 sqrtPriceX96, uint128 liquidity, int24 tick, uint24 fee)",
+  "event Initialize(bytes32 indexed id, address indexed currency0, address indexed currency1, uint24 fee, int24 tickSpacing, address hooks, uint160 sqrtPriceX96, int24 tick)",
+  "event ModifyLiquidity(bytes32 indexed id, address indexed sender, int24 tickLower, int24 tickUpper, int256 liquidityDelta, bytes32 salt)",
+] as const;

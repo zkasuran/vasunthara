@@ -6,6 +6,7 @@ import { derivePoolId, type PoolKey } from "../src/pool-id.js";
 import {
   buildFeeGrowthWorkflow,
   buildPositionDriftWorkflow,
+  buildSwapEventWorkflow,
   buildTickCrossWorkflow,
   jsonAbiFragment,
   writeNode,
@@ -245,5 +246,94 @@ describe("buildFeeGrowthWorkflow", () => {
     const expression = gate?.data.config.condition as string;
     expect(expression).toContain((1n << 100n).toString());
     expect(expression).not.toContain("e+");
+  });
+});
+
+describe("buildSwapEventWorkflow", () => {
+  const wf = buildSwapEventWorkflow({
+    name: "v4-swap-driven",
+    chainId: SEPOLIA,
+    poolKey: SEPOLIA_POOL,
+    action: action(),
+  });
+
+  it("is a connected graph", () => {
+    assertGraphIsConnected(wf);
+  });
+
+  it("subscribes to PoolManager, the one contract every V4 pool shares", () => {
+    const trigger = wf.nodes.find((n) => n.type === "trigger");
+    expect(trigger?.data.config.triggerType).toBe("Event");
+    expect(trigger?.data.config.eventName).toBe("Swap");
+    expect(trigger?.data.config.contractAddress).toBe(
+      DEPLOYMENTS[SEPOLIA].poolManager,
+    );
+  });
+
+  it("carries a Swap event ABI whose topic0 matches the live chain", () => {
+    const trigger = wf.nodes.find((n) => n.type === "trigger");
+    const abi = JSON.parse(trigger?.data.config.contractABI as string);
+    const iface = new Interface(abi);
+    const fragment = iface.getEvent("Swap");
+    // Confirmed against real Ethereum Sepolia PoolManager logs on 2026-09-18.
+    expect(fragment?.topicHash).toBe(
+      "0x40e9cecb9f5f1f1c5b9c97dec2917b7ee92e57ba5563708daca94dd84ad7112f",
+    );
+  });
+
+  it("narrows the PoolManager-wide stream to our poolId", () => {
+    // Without this the workflow acts on strangers' pools, because one
+    // PoolManager serves every pool on the chain.
+    const gate = wf.nodes.find((n) => n.id === "gate-pool");
+    expect(gate?.data.config.condition).toBe(
+      `{{@trigger-1:Trigger.args.id}} == "${derivePoolId(SEPOLIA_POOL)}"`,
+    );
+    const first = wf.edges.find((e) => e.source === "trigger-1");
+    expect(first?.target).toBe("gate-pool");
+  });
+
+  it("chains a second gate before the action when one is given", () => {
+    const gated = buildSwapEventWorkflow({
+      name: "v4-swap-driven-gated",
+      chainId: SEPOLIA,
+      poolKey: SEPOLIA_POOL,
+      extraCondition: "{{@trigger-1:Trigger.args.tick}} <= -5000",
+      action: action(),
+    });
+    assertGraphIsConnected(gated);
+    const toAction = gated.edges.find((e) => e.target === "act-1");
+    expect(toAction?.source).toBe("gate-state");
+    expect(toAction?.sourceHandle).toBe("true");
+  });
+});
+
+describe("block trigger", () => {
+  it("always sets blockInterval, which the platform requires", () => {
+    const wf = buildTickCrossWorkflow({
+      name: "v4-block",
+      chainId: SEPOLIA,
+      poolKey: SEPOLIA_POOL,
+      comparison: ">=",
+      triggerTick: 0,
+      trigger: { kind: "block", chainId: SEPOLIA },
+      action: action(),
+    });
+    const trigger = wf.nodes.find((n) => n.type === "trigger");
+    // Omitting it leaves a trigger that never fires.
+    expect(trigger?.data.config.blockInterval).toBe("1");
+  });
+
+  it("honours an explicit interval", () => {
+    const wf = buildTickCrossWorkflow({
+      name: "v4-block-10",
+      chainId: SEPOLIA,
+      poolKey: SEPOLIA_POOL,
+      comparison: ">=",
+      triggerTick: 0,
+      trigger: { kind: "block", chainId: SEPOLIA, blockInterval: 10 },
+      action: action(),
+    });
+    const trigger = wf.nodes.find((n) => n.type === "trigger");
+    expect(trigger?.data.config.blockInterval).toBe("10");
   });
 });

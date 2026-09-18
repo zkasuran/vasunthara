@@ -10,7 +10,11 @@
 // ABI the reader uses, so the library and the workflow can never drift apart.
 
 import { Interface } from "ethers";
-import { POSITION_MANAGER_ABI, STATE_VIEW_ABI } from "./abis.js";
+import {
+  POOL_MANAGER_EVENTS_ABI,
+  POSITION_MANAGER_ABI,
+  STATE_VIEW_ABI,
+} from "./abis.js";
 import { type ChainId, getDeployment } from "./deployments.js";
 import type {
   WorkflowDefinition,
@@ -31,6 +35,19 @@ export function jsonAbiFragment(
   const fragment = iface.getFunction(functionName);
   if (!fragment) {
     throw new Error(`no function ${functionName} in the supplied ABI`);
+  }
+  return JSON.stringify([JSON.parse(fragment.format("json"))]);
+}
+
+/** The same, for an event, which the Event trigger wants as `contractABI`. */
+export function jsonEventAbi(
+  abi: readonly string[],
+  eventName: string,
+): string {
+  const iface = new Interface(abi as unknown as string[]);
+  const fragment = iface.getEvent(eventName);
+  if (!fragment) {
+    throw new Error(`no event ${eventName} in the supplied ABI`);
   }
   return JSON.stringify([JSON.parse(fragment.format("json"))]);
 }
@@ -160,7 +177,21 @@ export type TriggerSpec =
       readonly cron: string;
       readonly timezone?: string;
     }
-  | { readonly kind: "block"; readonly chainId: ChainId };
+  | {
+      readonly kind: "block";
+      readonly chainId: ChainId;
+      /** Required by the platform. Fire every N blocks. */
+      readonly blockInterval?: number;
+    }
+  | {
+      /**
+       * Fire on a PoolManager event. This is the V4-native trigger: rather
+       * than polling a pool on a timer, the workflow wakes on the swap itself.
+       */
+      readonly kind: "poolManagerEvent";
+      readonly chainId: ChainId;
+      readonly eventName: "Swap" | "Initialize" | "ModifyLiquidity";
+    };
 
 function buildTrigger(spec: TriggerSpec): WorkflowNode {
   if (spec.kind === "manual") {
@@ -173,9 +204,21 @@ function buildTrigger(spec: TriggerSpec): WorkflowNode {
       scheduleTimezone: spec.timezone ?? "UTC",
     });
   }
+  if (spec.kind === "poolManagerEvent") {
+    const deployment = getDeployment(spec.chainId);
+    return triggerNode({
+      triggerType: "Event",
+      network: String(spec.chainId),
+      contractAddress: deployment.poolManager,
+      contractABI: jsonEventAbi(POOL_MANAGER_EVENTS_ABI, spec.eventName),
+      eventName: spec.eventName,
+    });
+  }
   return triggerNode({
     triggerType: "Block",
     network: String(spec.chainId),
+    // Required by the platform. Omitting it leaves a trigger that never fires.
+    blockInterval: String(spec.blockInterval ?? 1),
   });
 }
 
@@ -390,5 +433,74 @@ export function buildFeeGrowthWorkflow(params: {
       edge("e2", "read-fee-growth", "gate-fees"),
       edge("e3", "gate-fees", params.action.id, "true"),
     ],
+  };
+}
+
+/**
+ * Act on every swap in one specific V4 pool.
+ *
+ * This is the trigger V4 makes possible and a polling loop cannot match. The
+ * PoolManager emits Swap with the poolId as its first indexed topic, so a
+ * workflow can wake on the swap itself instead of asking "has anything changed"
+ * on a timer, and it sees the post-swap tick, price and liquidity in the event
+ * payload without a single extra RPC call.
+ *
+ * One PoolManager serves every pool on the chain, so the trigger fires for all
+ * of them and the first Condition narrows to ours by poolId. That filter is not
+ * optional: without it the workflow acts on strangers' pools.
+ */
+export function buildSwapEventWorkflow(params: {
+  name: string;
+  description?: string;
+  chainId: ChainId;
+  poolKey: PoolKey;
+  /** Extra gate on the post-swap state, as a Condition expression. */
+  extraCondition?: string;
+  action: WorkflowNode;
+}): WorkflowDefinition {
+  const deployment = getDeployment(params.chainId);
+  const poolId = derivePoolId(params.poolKey);
+
+  const mine = conditionNode({
+    id: "gate-pool",
+    label: "Our Pool",
+    description: `narrow the PoolManager-wide Swap stream to poolId ${poolId}`,
+    expression: `{{@trigger-1:Trigger.args.id}} == "${poolId}"`,
+    x: 272,
+  });
+
+  const nodes: WorkflowNode[] = [
+    buildTrigger({
+      kind: "poolManagerEvent",
+      chainId: params.chainId,
+      eventName: "Swap",
+    }),
+    mine,
+  ];
+  const edges: WorkflowEdge[] = [edge("e1", "trigger-1", "gate-pool")];
+
+  if (params.extraCondition) {
+    const extra = conditionNode({
+      id: "gate-state",
+      label: "Post Swap State",
+      description: "gate on the state the swap left behind",
+      expression: params.extraCondition,
+      x: 544,
+    });
+    nodes.push(extra);
+    edges.push(edge("e2", "gate-pool", "gate-state", "true"));
+    edges.push(edge("e3", "gate-state", params.action.id, "true"));
+  } else {
+    edges.push(edge("e2", "gate-pool", params.action.id, "true"));
+  }
+
+  nodes.push(params.action);
+  return {
+    name: params.name,
+    description:
+      params.description ??
+      `Uniswap V4 swap-driven automation on ${deployment.name}, poolId ${poolId}`,
+    nodes,
+    edges,
   };
 }
