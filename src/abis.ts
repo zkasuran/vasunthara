@@ -1,6 +1,7 @@
 // Uniswap V4 lens ABIs, matching the deployed bytecode. Verified live over
 // public RPC on 2026-09-18: getSlot0 selector 0xc815641c,
-// getPoolAndPositionInfo 0x7ba03aad, quoteExactInputSingle 0xaa9d21cb.
+// getPoolAndPositionInfo 0x7ba03aad, quoteExactInputSingle 0xaa9d21cb,
+// getFeeGrowthInside 0x53e9c1fb, getPositionInfo 0x97fd7b42.
 //
 // StateView, PositionManager and V4Quoter are the read/quote surface. Writes
 // (swap, modifyLiquidity) go through the PoolManager unlock callback or the
@@ -13,6 +14,7 @@ export const STATE_VIEW_ABI = [
   "function getFeeGrowthGlobals(bytes32 poolId) view returns (uint256 feeGrowthGlobal0, uint256 feeGrowthGlobal1)",
   "function getTickLiquidity(bytes32 poolId, int24 tick) view returns (uint128 liquidityGross, int128 liquidityNet)",
   "function getPositionInfo(bytes32 poolId, bytes32 positionId) view returns (uint128 liquidity, uint256 feeGrowthInside0LastX128, uint256 feeGrowthInside1LastX128)",
+  "function getFeeGrowthInside(bytes32 poolId, int24 tickLower, int24 tickUpper) view returns (uint256 feeGrowthInside0X128, uint256 feeGrowthInside1X128)",
 ] as const;
 
 export const POSITION_MANAGER_ABI = [

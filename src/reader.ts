@@ -20,6 +20,17 @@ export type TickLiquidity = {
   liquidityNet: bigint;
 };
 
+export type FeeGrowthInside = {
+  feeGrowthInside0X128: bigint;
+  feeGrowthInside1X128: bigint;
+};
+
+export type PositionInfo = {
+  liquidity: bigint;
+  feeGrowthInside0LastX128: bigint;
+  feeGrowthInside1LastX128: bigint;
+};
+
 export type PoolPositionInfo = {
   poolKey: PoolKey;
   /** Packed position info word (tickLower, tickUpper, hasSubscriber). */
@@ -96,6 +107,41 @@ export class VasuntharaReader {
   /** The singleton PoolManager this StateView reads from. */
   async poolManager(): Promise<string> {
     return await this.stateView.poolManager();
+  }
+
+  /**
+   * Fee growth accumulated inside a tick range, right now. Subtracting a
+   * position's stored checkpoint from this is how Uniswap computes the fees a
+   * position is owed, so it is the read a compounding job gates on.
+   */
+  async getFeeGrowthInside(
+    poolId: string,
+    tickLower: number,
+    tickUpper: number,
+  ): Promise<FeeGrowthInside> {
+    const r = await this.stateView.getFeeGrowthInside(
+      poolId,
+      tickLower,
+      tickUpper,
+    );
+    return { feeGrowthInside0X128: r[0], feeGrowthInside1X128: r[1] };
+  }
+
+  /**
+   * A position's liquidity and its stored fee-growth checkpoint, keyed by the
+   * salted position id rather than the NFT token id. Pair it with
+   * getFeeGrowthInside to value the uncollected fees.
+   */
+  async getPositionInfo(
+    poolId: string,
+    positionId: string,
+  ): Promise<PositionInfo> {
+    const r = await this.stateView.getPositionInfo(poolId, positionId);
+    return {
+      liquidity: r[0],
+      feeGrowthInside0LastX128: r[1],
+      feeGrowthInside1LastX128: r[2],
+    };
   }
 
   // ---- PositionManager: position monitoring ------------------------------
