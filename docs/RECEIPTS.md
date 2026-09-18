@@ -14,7 +14,7 @@ Captured 2026-09-18.
 KeeperHub relays writes and sponsors the gas, so **the explorer never shows our
 wallet as `from`**. On the transaction below, `from` is KeeperHub's relayer
 `0x809d8252aa4f9b8f7d9be7213855b289fe7d0444` and `to` is its executor contract
-`0x5af5194b4b0909eb978e3cf1e25333852277f07d`. Neither is our wallet, and neither
+`0x5af5194b4b0909eb978e3cf1e25333852277f07d`. Neither is our wallet. Neither
 is Uniswap V4.
 
 That is not a caveat hiding a weak claim, it is how sponsored execution works,
@@ -40,8 +40,8 @@ what ties the transaction to a specific Uniswap V4 pool.
 ### The pool
 
 The workflow targets one specific **hooked, dynamic-fee** pool. The poolId is
-derived by Vasunthara from the PoolKey, not pasted in, and the hook address is
-part of that key:
+derived by Vasunthara from the PoolKey rather than pasted in, and the hook
+address is part of that key:
 
 ```
 poolId      0xddbb5b18fb2d4c61002baf6256e2317b44cfd0b55e992414f8acff9f72c94e8c
@@ -133,7 +133,7 @@ action, which is the refusal path working.
 | Arbitrum Sepolia (421614) | `0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317` | `0xf3A39C86dbd13C45365E57FB90fe413371F65AF8` |
 
 On every chain: StateView, PositionManager and V4Quoter all return the same
-`poolManager()`, and it is the one listed above. Each PoolSwapTest carries the
+`poolManager()`, the one listed above. Each PoolSwapTest carries the
 `swap` selector `0x2229d0b4` in its deployed bytecode and its `manager()`
 returns that chain's PoolManager, so the router is provably bound to the right
 core rather than merely being an address someone published.
@@ -147,8 +147,8 @@ npm run proof -- all      # poolManager liveness across every shipped chain
 ## Testnet only, and why
 
 Everything here runs on a testnet. No real funds move. Uniswap V4 and KeeperHub
-both operate on Ethereum, Optimism, Polygon, Base and Arbitrum mainnet, and the
-same code paths address those chains, but this project does not send mainnet
+both operate on Ethereum, Optimism, Polygon, Base and Arbitrum mainnet. The
+same code paths address those chains. This project does not send mainnet
 transactions.
 
 `PoolSwapTest` is Uniswap's own router from `v4-core` and is a testnet
@@ -156,4 +156,4 @@ component. The mainnet equivalent is the Universal Router with a `V4_SWAP`
 command (`0x10`) carrying an action plan of `SWAP_EXACT_IN_SINGLE` (`0x06`),
 `SETTLE_ALL` (`0x0c`) and `TAKE_ALL` (`0x0f`). The struct that plan encodes has
 changed between v4-periphery releases, so it has to be read off the deployed
-router rather than assumed, and it is left unshipped rather than guessed.
+router rather than assumed. It is left unshipped rather than guessed.
