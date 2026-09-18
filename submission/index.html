@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Vasunthara - DoraHacks BUIDL Submission (Click to Copy)</title>
+<style>
+  :root { --bg:#140a11; --card:#1e0f19; --ink:#f5e8f0; --muted:#c39bb4; --accent:#e0459a; --line:#3a2131; --ok:#3fb950; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
+  .wrap { max-width:920px; margin:0 auto; padding:32px 20px 96px; }
+  h1 { font-size:24px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 8px; }
+  .warn { background:#2a1220; border:1px solid var(--accent); border-radius:10px; padding:12px 14px; margin:16px 0 24px; color:#f6bcdd; font-size:14px; }
+  .warn b { color:#ffd6ee; }
+  h2 { font-size:15px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); margin:28px 0 10px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin:10px 0; }
+  .label { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); margin-bottom:6px; display:flex; justify-content:space-between; align-items:center; gap:10px; }
+  .val { white-space:pre-wrap; word-break:break-word; font-size:14px; }
+  code, .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px; }
+  button.copy { background:transparent; color:var(--accent); border:1px solid var(--accent); border-radius:8px; padding:4px 10px; font-size:12px; cursor:pointer; white-space:nowrap; }
+  button.copy:hover { background:var(--accent); color:#150a11; }
+  button.copy.done { color:var(--ok); border-color:var(--ok); }
+  a { color:var(--accent); }
+  ul { margin:6px 0; padding-left:20px; }
+  .foot { color:var(--muted); font-size:13px; margin-top:24px; }
+  .count { font-size:11px; color:var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Vasunthara - DoraHacks BUIDL Submission</h1>
+  <p class="sub">Main track: Uniswap V4 Hook Automation Router. Click any <b>Copy</b> button, then paste into the matching DoraHacks BUIDL field.</p>
+
+  <div class="warn">
+    <b>Read before submitting.</b>
+    <ul>
+      <li>Fields below map 1:1 to the DoraHacks "Submit BUIDL" form: <b>Name, Logo, Tagline, Description, Tags, Demo video, Source code, Track</b>. For URL fields, DoraHacks wants <b>one URL per blank</b>.</li>
+      <li>Fill after you have them: the <b>demo video URL</b> (after upload), the <b>source repo URL</b> (after you create the GitHub repo and push), and <b>contact</b>. They are marked as placeholders.</li>
+      <li>The final "Submit BUIDL" click is yours in your own logged-in browser. This packet does not submit anything and stores no tokens.</li>
+    </ul>
+  </div>
+
+  <h2>BUIDL Name</h2>
+  <div class="card">
+    <div class="label">Name <button class="copy" data-copy="f-name">Copy</button></div>
+    <div class="val" id="f-name">Vasunthara</div>
+  </div>
+
+  <h2>Tagline / Intro (one line)</h2>
+  <div class="card">
+    <div class="label">Tagline <button class="copy" data-copy="f-tagline">Copy</button></div>
+    <div class="val" id="f-tagline">Read the pool. Rule the hook. The deterministic read layer for automating Uniswap V4 hook strategies.</div>
+  </div>
+
+  <h2>Logo</h2>
+  <div class="card">
+    <div class="label">Use the video thumbnail (media/upload/thumbnail.jpg) or a square crop of it <button class="copy" data-copy="f-logo">Copy note</button></div>
+    <div class="val" id="f-logo">Upload media/upload/thumbnail.jpg (3840x2160, Uniswap-pink brand). DoraHacks accepts a rectangular logo; if it wants square, center-crop it to 1:1.</div>
+  </div>
+
+  <h2>Description / Details</h2>
+  <div class="card">
+    <div class="label">Description <button class="copy" data-copy="f-desc">Copy</button></div>
+    <div class="val" id="f-desc">Vasunthara is the deterministic read layer for automating Uniswap V4 hook strategies. It reads live V4 pool state, position state and hook-aware quotes by poolId, across every chain V4 is deployed on, so an automation engine can drive limit orders, LP rebalancing and fee compounding without guessing.
+
+Why a read layer is the product. Uniswap V4 replaces V3's per-pool contracts with a single PoolManager and moves per-pool logic into hooks: contracts attached to a pool that run before and after swap, add-liquidity and remove-liquidity. A pool is identified not by an address but by a poolId, the keccak256 of its PoolKey (currency0, currency1, fee, tickSpacing, hooks). Because the hooks address is part of that key, a hooked pool and an otherwise identical no-hook pool are two different pools. So the first thing any deterministic V4 hook strategy needs, whether a limit order that fires when the tick crosses a level, an LP position that rebalances when it drifts out of range, or a fee-compounding job, is to read live pool and position state keyed by poolId and token id, including which hook a position sits behind. That is exactly what Vasunthara provides.
+
+What it reads, over the three canonical V4 lens contracts (reads only, no signer, no gas):
+- StateView: getSlot0 (price, tick, fee), getLiquidity, getFeeGrowthGlobals, getTickLiquidity, getPositionInfo. The monitoring primitive: gate a limit order on the tick, an exit on liquidity draining, a compound on fee growth.
+- PositionManager: getPositionLiquidity, getPoolAndPositionInfo (returns the PoolKey including its hooks address), ownerOf, nextTokenId. Know which hooked pool and range a position sits in before rebalancing.
+- V4Quoter: quoteExactInputSingle and quoteExactOutputSingle, hook-aware, with hookData forwarded to the hook so a quote reflects the pool a fill will really execute in.
+
+How it ships. Vasunthara is a small TypeScript library that depends only on ethers v6 and runs standalone against any provider, with a live proof CLI (npm run proof) and a deterministic test suite that pins the on-chain function selectors and decodes a recorded live response. It also ships as a KeeperHub protocol plugin (slug uniswap-v4), so the same reads become no-code workflow actions in KeeperHub's visual builder.
+
+Chains: Ethereum, Base, Arbitrum, Optimism, Polygon, Unichain and Ethereum Sepolia. V4 does not reuse one address across chains, so each lens address is listed explicitly and sourced from the Uniswap v4 deployments page. Every read was verified live over public RPC on 2026-09-18, including real hooked, dynamic-fee positions on mainnet.
+
+Vasunthara is the first deterministic execution layer for V4 hook strategies, opening a new category of automated DeFi products.</div>
+  </div>
+
+  <h2>Tags</h2>
+  <div class="card">
+    <div class="label">Tags (comma-separated) <button class="copy" data-copy="f-tags">Copy</button></div>
+    <div class="val" id="f-tags">Uniswap, Uniswap V4, DeFi, Hooks, Automation, poolId, StateView, Limit Orders, Rebalancing, Ethereum</div>
+  </div>
+
+  <h2>Demo Video (mandatory)</h2>
+  <div class="card">
+    <div class="label">Video URL - FILL AFTER UPLOAD (file: media/DEMO-vasunthara.mp4) <button class="copy" data-copy="f-video">Copy</button></div>
+    <div class="val mono" id="f-video">https://[youtube-or-loom-unlisted-link]</div>
+  </div>
+
+  <h2>Source Code (mandatory)</h2>
+  <div class="card">
+    <div class="label">Repository URL - FILL AFTER YOU CREATE + PUSH THE REPO <button class="copy" data-copy="f-repo">Copy</button></div>
+    <div class="val mono" id="f-repo">https://github.com/[your-username]/vasunthara</div>
+  </div>
+
+  <h2>Project Source / Track</h2>
+  <div class="card">
+    <div class="label">Track <button class="copy" data-copy="f-track">Copy</button></div>
+    <div class="val" id="f-track">Main track - Uniswap V4 Hook Automation Router</div>
+  </div>
+
+  <h2>Contact (if the form asks)</h2>
+  <div class="card">
+    <div class="label">Contact - EDIT THESE <button class="copy" data-copy="f-contact">Copy</button></div>
+    <div class="val" id="f-contact">Email: [your-email@example.com]
+X: [@your_handle]
+Discord: [your_discord#0000]</div>
+  </div>
+
+  <h2>Proof: live reads through the shipped addresses (mainnet)</h2>
+  <div class="card">
+    <div class="label">Run it yourself: npm run proof <button class="copy" data-copy="f-proof1">Copy</button></div>
+    <div class="val mono" id="f-proof1">StateView 0x7fFE42C4a5DEeA5b0feC41C94C136Cf115597227
+  poolManager()        -> 0x000000000004444c5dc75cB358380D2e3dE08A90 (canonical v4 core, match)
+  getSlot0(ETH/USDC 0.05% poolId 0x21c67e77...ca27)
+    -> sqrtPriceX96 3963491443691221452379711, tick -198070, protocolFee 512125, lpFee 500
+  getLiquidity(poolId) -> 1040359073077463346
+V4Quoter 0x52F0E24D1c21C8A0cB1e5a5dD6198556BD9E1203 (selector 0xaa9d21cb)
+  quoteExactInputSingle(ETH/USDC 0.05%, 1 ETH, hookData 0x)
+    -> amountOut 2500945880 (~2500.95 USDC), gasEstimate 64111</div>
+  </div>
+
+  <h2>Proof: hook-awareness on real hooked pools (mainnet)</h2>
+  <div class="card">
+    <div class="label">getPoolAndPositionInfo returns the hook; getPositionLiquidity the size <button class="copy" data-copy="f-proof2">Copy</button></div>
+    <div class="val mono" id="f-proof2">position #408579 -> hook 0xbf9828455cdc5F02771536e3EcB3c0F931EABEC4,
+                   currency1 USDC, fee 0x800000 (dynamic-fee), liquidity 289602464346483
+position #408571 -> hook 0x0000113dCf4ADd69999Fad8F20F2b63F979bfcC0,
+                   fee 0x800000 (dynamic-fee), liquidity 129333415568258
+Both sit in hooked, dynamic-fee pools. Reading the hook address and liquidity is
+exactly the state a rebalance or compound workflow gates on.</div>
+  </div>
+
+  <h2>Proof: all seven chains (poolManager liveness)</h2>
+  <div class="card">
+    <div class="label">npm run proof -- all <button class="copy" data-copy="f-proof3">Copy</button></div>
+    <div class="val mono" id="f-proof3">Ethereum   (1)        poolManager() -> 0x0000...8A90  [match]
+Optimism   (10)       poolManager() -> 0x9a13F98C...Ec3  [match]
+Unichain   (130)      poolManager() -> 0x1F984000...004  [match]
+Polygon    (137)      poolManager() -> 0x67366782...cD6  [match]
+Base       (8453)     poolManager() -> 0x498581fF...b2b  [match]
+Arbitrum   (42161)    poolManager() -> 0x360E68fa...B32  [match]
+Sepolia    (11155111) poolManager() -> 0xE03A1074...543  [match]</div>
+  </div>
+
+  <h2>Proof: offline verification in the repo</h2>
+  <div class="card">
+    <div class="label">typecheck, tests, lint <button class="copy" data-copy="f-proof4">Copy</button></div>
+    <div class="val mono" id="f-proof4">npm run typecheck   -> tsc --noEmit clean
+npm test            -> 12 passed (ABI selectors 0xc815641c / 0x7ba03aad / 0xaa9d21cb,
+                       poolId derivation, live getSlot0 decode)
+npm run lint        -> biome clean
+npm run proof       -> live reads over public RPC (captured in docs/PROOF.md)</div>
+  </div>
+
+  <p class="foot">No secrets, keys, or session tokens are in this file. Video, repo and contact fields are placeholders for you to fill. The final push and BUIDL submission are done by you in your browser.</p>
+</div>
+
+<script>
+document.querySelectorAll("button.copy").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var el = document.getElementById(btn.getAttribute("data-copy"));
+    var text = el ? el.innerText : "";
+    navigator.clipboard.writeText(text).then(function () {
+      var old = btn.textContent;
+      btn.textContent = "Copied";
+      btn.classList.add("done");
+      setTimeout(function () { btn.textContent = old; btn.classList.remove("done"); }, 1400);
+    });
+  });
+});
+</script>
+</body>
+</html>

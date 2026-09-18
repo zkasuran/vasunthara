@@ -1,0 +1,5 @@
+0:00 Vasunthara: read the pool, rule the hook
+0:15 Why V4 automation is a read problem
+0:40 The three lens contracts
+1:09 Verified live on real hooked pools
+1:36 Standalone library and KeeperHub plugin

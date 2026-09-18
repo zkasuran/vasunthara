@@ -1,0 +1,46 @@
+{
+  "name": "vasunthara",
+  "version": "0.1.0",
+  "description": "Vasunthara - read the pool, rule the hook. The deterministic read layer for automating Uniswap V4 hook strategies: pool state, position state and hook-aware quotes by poolId, across every chain V4 is deployed on.",
+  "type": "module",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/asuran/vasunthara",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/asuran/vasunthara.git"
+  },
+  "keywords": [
+    "uniswap",
+    "uniswap-v4",
+    "hooks",
+    "defi",
+    "automation",
+    "poolid",
+    "stateview",
+    "limit-orders",
+    "rebalancing",
+    "ethereum"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "bin": {
+    "vasunthara": "./src/cli.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "proof": "tsx src/cli.ts",
+    "lint": "biome check ."
+  },
+  "peerDependencies": {
+    "ethers": "^6.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
+    "ethers": "^6.17.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

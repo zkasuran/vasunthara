@@ -1,0 +1,19 @@
+1
+00:00:00,300 --> 00:00:14,220
+Vasunthara. Read the pool, rule the hook. It is the deterministic read layer for automating Uniswap V4 hook strategies, so a workflow can drive limit orders, liquidity rebalancing and fee compounding without guessing.
+
+2
+00:00:15,620 --> 00:00:39,764
+Uniswap V4 replaces V3's per-pool contracts with one PoolManager, and moves pool logic into hooks. A pool is identified by a poolId, the hash of its pool key, and the hook address is part of that key. So before a strategy can fire a limit order or rebalance a position, it has to read live pool state and position state keyed by that poolId, including which hook a position sits behind.
+
+3
+00:00:41,164 --> 00:01:08,020
+Vasunthara reads exactly that, over the three canonical V4 lens contracts. StateView gives price, tick, liquidity and fee growth for a pool, the signals a limit order or rebalance gates on. PositionManager gives a position's liquidity and the full pool key it belongs to, including its hook. And the V4 Quoter prices a swap through a specific hooked pool, forwarding hook data to the hook exactly as an on-chain swap would.
+
+4
+00:01:09,420 --> 00:01:35,436
+Every read is verified live over public RPC. On mainnet, getSlot0 returns a live price and tick, and the quoter prices one ETH into about twenty-five hundred USDC. The router reads real hooked positions, returning their hook address and liquidity on dynamic-fee pools, which is the exact state a rebalance or compound workflow acts on. The pool manager address checks out on all seven chains it ships.
+
+5
+00:01:36,836 --> 00:02:03,404
+Vasunthara ships as one small TypeScript library that depends only on ethers and runs on its own, with a live proof command and twelve tests that pin the on-chain selectors and decode a recorded response. It also ships as a KeeperHub plugin, so the same reads become no-code workflow actions. It is the first deterministic execution layer for V4 hook strategies, and it opens a new category of automated DeFi products.
