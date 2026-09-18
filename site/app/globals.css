@@ -708,3 +708,559 @@ footer a:hover {
     transform: none;
   }
 }
+
+/* ================= Live lab ================= */
+
+.lab {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(6, 2, 12, 0.5);
+  padding: 32px;
+  backdrop-filter: blur(8px);
+}
+
+.lab-head {
+  margin-bottom: 26px;
+}
+
+.lab-head .section-title {
+  margin: 16px 0 10px;
+}
+
+/* ---- Pool presets ---- */
+.lab-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.lab-preset {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 10px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  transition: border-color 0.2s, transform 0.2s, background 0.2s;
+  position: relative;
+}
+
+.lab-preset:hover {
+  transform: translateY(-2px);
+  border-color: var(--pink-2);
+}
+
+.lab-preset.on {
+  border-color: var(--pink);
+  background: rgba(255, 45, 155, 0.1);
+}
+
+.lab-preset span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.lab-hooked {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 10px;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cyan);
+}
+
+/* ---- Panels ---- */
+.lab-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.lab-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.lab-panel {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 20px 22px;
+}
+
+.lab-panel.wide {
+  grid-column: 1 / -1;
+}
+
+.lab-panel-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-weight: 700;
+  font-size: 15px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+.lab-panel-title.mt {
+  margin-top: 24px;
+}
+
+.lab-panel-sub {
+  font-weight: 400;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: right;
+}
+
+/* ---- Rows ---- */
+.lab-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 5px 0;
+  font-size: 13.5px;
+  border-bottom: 1px dashed rgba(255, 110, 199, 0.07);
+}
+
+.lab-row-label {
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.lab-row-value {
+  text-align: right;
+  min-width: 0;
+  word-break: break-word;
+}
+
+.lab-mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.lab-mono.break {
+  word-break: break-all;
+}
+
+.lab-annot {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+/* ---- Fields ---- */
+.lab-field {
+  display: block;
+  margin: 14px 0;
+}
+
+.lab-field-label {
+  display: block;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.lab-field-hint {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.5;
+}
+
+.lab-field-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.lab-input {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: rgba(6, 2, 12, 0.6);
+  color: var(--ink);
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+.lab-input.mono {
+  font-family: var(--mono);
+  font-size: 12.5px;
+}
+
+.lab-input.narrow {
+  width: 120px;
+}
+
+.lab-input:focus {
+  outline: none;
+  border-color: var(--pink-2);
+}
+
+.lab-range {
+  width: 100%;
+  accent-color: var(--pink);
+}
+
+/* ---- Small controls ---- */
+.lab-inline-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+
+.lab-mini,
+.lab-copy {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  padding: 5px 13px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.lab-mini:hover,
+.lab-copy:hover {
+  color: var(--ink);
+  border-color: var(--pink-2);
+}
+
+.lab-mini.on {
+  color: var(--ink);
+  border-color: var(--pink);
+  background: rgba(255, 45, 155, 0.12);
+}
+
+.lab-mini-btn {
+  padding: 8px 18px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+.lab-read {
+  width: 100%;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.lab-read:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.lab-link {
+  color: var(--cyan);
+  font-size: 12.5px;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+}
+
+.lab-link:hover {
+  border-bottom-color: var(--cyan);
+}
+
+/* ---- poolId display ---- */
+.lab-poolid {
+  border: 1px solid var(--pink);
+  border-radius: 14px;
+  background: rgba(255, 45, 155, 0.08);
+  padding: 14px 16px;
+  color: var(--pink-2);
+  box-shadow: 0 0 26px rgba(255, 45, 155, 0.16);
+}
+
+.lab-contrast {
+  margin-top: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--muted);
+}
+
+.lab-contrast-title {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 8px;
+}
+
+.lab-contrast p {
+  font-size: 12.5px;
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.lab-lenses {
+  margin-top: 22px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---- Tabs ---- */
+.lab-tabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 28px 0 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.lab-tab {
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 12px 12px 0 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 10px 18px;
+  font-size: 13.5px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s;
+}
+
+.lab-tab:hover {
+  color: var(--ink);
+}
+
+.lab-tab.on {
+  color: var(--ink);
+  background: rgba(255, 45, 155, 0.1);
+  border-color: var(--line);
+  font-weight: 600;
+}
+
+.lab-tabbody {
+  padding-top: 22px;
+}
+
+/* ---- Notes and pills ---- */
+.lab-note {
+  border-radius: 12px;
+  padding: 12px 15px;
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 14px 0;
+  border: 1px solid var(--line);
+  color: var(--muted);
+}
+
+.lab-note p {
+  margin: 8px 0 0;
+}
+
+.lab-note.ok {
+  border-color: rgba(63, 185, 80, 0.4);
+  background: rgba(63, 185, 80, 0.08);
+  color: #9ae6a4;
+}
+
+.lab-note.bad {
+  border-color: rgba(255, 95, 87, 0.4);
+  background: rgba(255, 95, 87, 0.08);
+  color: #ffb3ae;
+}
+
+.lab-note.warn {
+  border-color: rgba(254, 188, 46, 0.35);
+  background: rgba(254, 188, 46, 0.07);
+  color: #f2d49b;
+}
+
+.lab-note.accent {
+  border-color: rgba(34, 211, 238, 0.35);
+  background: rgba(34, 211, 238, 0.07);
+  color: #9be9f5;
+}
+
+.lab-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-size: 11.5px;
+  font-family: var(--mono);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.lab-pill.ok {
+  color: #9ae6a4;
+  border-color: rgba(63, 185, 80, 0.5);
+  background: rgba(63, 185, 80, 0.1);
+}
+
+.lab-pill.bad {
+  color: #ffb3ae;
+  border-color: rgba(255, 95, 87, 0.5);
+  background: rgba(255, 95, 87, 0.1);
+}
+
+.lab-pill.warn {
+  color: #f2d49b;
+  border-color: rgba(254, 188, 46, 0.45);
+  background: rgba(254, 188, 46, 0.1);
+}
+
+.lab-pill.accent {
+  color: #9be9f5;
+  border-color: rgba(34, 211, 238, 0.45);
+  background: rgba(34, 211, 238, 0.1);
+}
+
+/* ---- Verdict ---- */
+.lab-verdict {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.lab-verdict-reason {
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.lab-evidence,
+.lab-json {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(6, 2, 12, 0.75);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.lab-json {
+  max-height: 460px;
+  overflow-y: auto;
+}
+
+/* ---- Quote controls ---- */
+.lab-quote-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+/* ---- Receipts ---- */
+.lab-receipts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.lab-receipt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 12px 14px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.lab-receipt:hover {
+  transform: translateY(-2px);
+  border-color: var(--pink-2);
+}
+
+.lab-receipt.on {
+  border-color: var(--pink);
+  background: rgba(255, 45, 155, 0.1);
+}
+
+.lab-receipt span {
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+/* ---- Spinner ---- */
+.lab-spinner {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 10px 0;
+}
+
+.lab-spinner-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--pink);
+  animation: labpulse 1s ease-in-out infinite;
+}
+
+@keyframes labpulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+}
+
+@media (max-width: 900px) {
+  .lab {
+    padding: 20px;
+  }
+  .lab-grid,
+  .lab-cols,
+  .lab-field-pair {
+    grid-template-columns: 1fr;
+  }
+  .lab-row {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .lab-row-value {
+    text-align: left;
+  }
+}

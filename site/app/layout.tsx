@@ -1,24 +1,32 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const DESCRIPTION =
+  "The Uniswap V4 execution layer for KeeperHub. Read live pool and position state by poolId, decide deterministically, then execute the swap through KeeperHub and verify the receipt on chain, in your browser.";
+
 export const metadata: Metadata = {
   title: "Vasunthara - Read the pool, rule the hook",
-  description:
-    "The deterministic read layer for automating Uniswap V4 hook strategies. Read live pool state, position state and hook-aware quotes by poolId across every chain V4 is deployed on.",
+  description: DESCRIPTION,
   keywords: [
     "Uniswap V4",
     "hooks",
-    "DeFi automation",
     "poolId",
+    "PoolManager",
     "StateView",
+    "DeFi automation",
+    "KeeperHub",
     "limit orders",
     "LP rebalancing",
   ],
   openGraph: {
     title: "Vasunthara - Read the pool, rule the hook",
-    description:
-      "The deterministic read layer for automating Uniswap V4 hook strategies.",
+    description: DESCRIPTION,
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Vasunthara - Read the pool, rule the hook",
+    description: DESCRIPTION,
   },
 };
 
