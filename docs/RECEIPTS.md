@@ -17,8 +17,8 @@ wallet as `from`**. On the transaction below, `from` is KeeperHub's relayer
 `0x5af5194b4b0909eb978e3cf1e25333852277f07d`. Neither is our wallet. Neither
 is Uniswap V4.
 
-That is not a caveat hiding a weak claim, it is how sponsored execution works,
-and it is why the proof here is the **emitted `Swap` event on the PoolManager**
+That is not a caveat hiding a weak claim, it is how sponsored execution works.
+It is why the proof here is the **emitted `Swap` event on the PoolManager**
 plus KeeperHub's own `executedCall` record, not the sender column. The event is
 what ties the transaction to a specific Uniswap V4 pool.
 
@@ -40,8 +40,8 @@ what ties the transaction to a specific Uniswap V4 pool.
 ### The pool
 
 The workflow targets one specific **hooked, dynamic-fee** pool. The poolId is
-derived by Vasunthara from the PoolKey rather than pasted in, and the hook
-address is part of that key:
+derived by Vasunthara from the PoolKey rather than pasted in. The hook address
+is part of that key:
 
 ```
 poolId      0xddbb5b18fb2d4c61002baf6256e2317b44cfd0b55e992414f8acff9f72c94e8c
@@ -78,8 +78,8 @@ tick after    -4648
 fee            3000
 ```
 
-**Value moved.** The pool took 0.00001 ETH and paid out 6,276,834,406,909 KHACN,
-and the swap moved the pool's tick from `-4608` to `-4648`.
+**Value moved.** The pool took 0.00001 ETH and paid out 6,276,834,406,909 KHACN.
+The swap moved the pool's tick from `-4608` to `-4648`.
 
 ### The fill matched the simulation exactly
 
@@ -144,7 +144,7 @@ npm run proof -- all      # poolManager liveness across every shipped chain
 
 ---
 
-## Testnet only, and why
+## Testnet only
 
 Everything here runs on a testnet. No real funds move. Uniswap V4 and KeeperHub
 both operate on Ethereum, Optimism, Polygon, Base and Arbitrum mainnet. The
