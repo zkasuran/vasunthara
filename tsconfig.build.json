@@ -1,0 +1,17 @@
+{
+  "//": "Publish build. The root tsconfig is a checker (noEmit, and it also reads test/); this one emits the package that consumers actually install. NodeNext rather than the root's Bundler resolution because the output has to resolve under plain Node: the source already writes explicit .js specifiers, which is exactly what NodeNext requires, so dist/index.js resolves dist/abis.js with no rewriting.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "removeComments": false
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "integrations", "test", "site"]
+}

@@ -1,4 +1,4 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env node
 import { JsonRpcProvider } from "ethers";
 import {
   type ChainId,

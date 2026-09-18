@@ -1,13 +1,16 @@
 {
   "name": "vasunthara",
   "version": "0.1.0",
-  "description": "Vasunthara - read the pool, rule the hook. The deterministic read layer for automating Uniswap V4 hook strategies: pool state, position state and hook-aware quotes by poolId, across every chain V4 is deployed on.",
+  "description": "Vasunthara - read the pool, rule the hook. The Uniswap V4 execution layer for KeeperHub: pool state, position state and hook-aware quotes by poolId, deterministic strategy decisions, and swaps executed through KeeperHub with verifiable receipts.",
   "type": "module",
   "license": "Apache-2.0",
   "homepage": "https://github.com/zkasuran/vasunthara",
   "repository": {
     "type": "git",
-    "url": "https://github.com/zkasuran/vasunthara.git"
+    "url": "git+https://github.com/zkasuran/vasunthara.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zkasuran/vasunthara/issues"
   },
   "keywords": [
     "uniswap",
@@ -19,20 +22,45 @@
     "stateview",
     "limit-orders",
     "rebalancing",
+    "keeperhub",
     "ethereum"
   ],
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "bin": {
-    "vasunthara": "./src/cli.ts"
+    "vasunthara": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
   },
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf dist",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "proof": "tsx src/cli.ts",
     "lint": "biome check .",
-    "demo": "tsx src/demo.ts"
+    "fix": "biome check --write .",
+    "demo": "tsx src/demo.ts",
+    "sync:site": "node scripts/sync-site-lib.mjs",
+    "check:site": "node scripts/sync-site-lib.mjs --check",
+    "verify": "npm run typecheck && npm test && npm run lint && npm run check:site",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "peerDependencies": {
     "ethers": "^6.0.0"
