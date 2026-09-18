@@ -45,6 +45,15 @@ export {
   VasuntharaReader,
 } from "./reader.js";
 export {
+  checkSimulation,
+  decodeBalanceDelta,
+  resetCircuitBreakerNode,
+  type SwapSimulation,
+  sanityGate,
+  simulateSwap,
+  tripCircuitBreakerNode,
+} from "./simulate.js";
+export {
   alignTickDown,
   applySlippage,
   type CompoundAction,
