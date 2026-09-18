@@ -2,6 +2,11 @@ import { Contract, type Provider } from "ethers";
 import { POSITION_MANAGER_ABI, QUOTER_ABI, STATE_VIEW_ABI } from "./abis.js";
 import { type ChainId, getDeployment } from "./deployments.js";
 import { hasHook, isDynamicFee, type PoolKey } from "./pool-id.js";
+import {
+  type DecodedPositionInfo,
+  decodePositionInfo,
+  positionInfoIsEmpty,
+} from "./position-info.js";
 
 export type Slot0 = {
   sqrtPriceX96: bigint;
@@ -39,6 +44,15 @@ export type PoolPositionInfo = {
   hasHook: boolean;
   /** True when the pool's fee is hook-controlled. */
   dynamicFee: boolean;
+  /**
+   * False when the token id was never minted or has since been burned. The
+   * call does not revert in that case, it returns a zero PoolKey and a zero
+   * info word, so a caller that does not check this reads a burned position as
+   * a real one at range [0, 0).
+   */
+  exists: boolean;
+  /** The decoded tick range, or null when the position does not exist. */
+  range: DecodedPositionInfo | null;
 };
 
 export type QuoteResult = {
@@ -171,11 +185,15 @@ export class VasuntharaReader {
       tickSpacing: Number(k[3]),
       hooks: k[4],
     };
+    const info = BigInt(r[1]);
+    const exists = !positionInfoIsEmpty(info);
     return {
       poolKey,
-      info: r[1],
+      info,
       hasHook: hasHook(poolKey.hooks),
       dynamicFee: isDynamicFee(poolKey.fee),
+      exists,
+      range: exists ? decodePositionInfo(info) : null,
     };
   }
 

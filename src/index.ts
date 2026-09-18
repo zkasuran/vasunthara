@@ -17,6 +17,17 @@ export {
   type V4Deployment,
 } from "./deployments.js";
 export {
+  describeFee,
+  explorerAddressUrl,
+  explorerTxUrl,
+  formatInteger,
+  formatTokenAmount,
+  hexEquals,
+  shortHex,
+  tickToPrice,
+  tickToPriceAdjusted,
+} from "./format.js";
+export {
   type ExecutionResult,
   KeeperHubClient,
   KeeperHubError,
@@ -34,6 +45,12 @@ export {
   isDynamicFee,
   type PoolKey,
 } from "./pool-id.js";
+export {
+  type DecodedPositionInfo,
+  decodePositionInfo,
+  positionInfoIsEmpty,
+  positionMatchesPool,
+} from "./position-info.js";
 export {
   type FeeGrowthGlobals,
   type FeeGrowthInside,
@@ -96,6 +113,18 @@ export {
   swapPriceLimit,
   type V4SwapPlan,
 } from "./swap.js";
+export {
+  decodeSwapLog,
+  findAllSwapLogs,
+  findPoolSwapLog,
+  isSwapLog,
+  type MinimalLog,
+  SWAP_EVENT_TOPIC,
+  type SwapEvent,
+  type SwapReceiptVerification,
+  type VerdictCode,
+  verifySwapReceipt,
+} from "./verify.js";
 export {
   buildFeeGrowthWorkflow,
   buildPositionDriftWorkflow,
