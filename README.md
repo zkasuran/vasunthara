@@ -4,161 +4,245 @@
 
 ### Read the pool. Rule the hook.
 
-**The deterministic read layer for automating Uniswap V4 hook strategies.**
+**The Uniswap V4 execution layer for KeeperHub.**
 
-Read live V4 pool state, position state and hook-aware quotes by `poolId`, across every chain V4 is deployed on, so an automation engine can drive limit orders, LP rebalancing and fee compounding without guessing.
+Watch live V4 pool and position state by `poolId`, decide deterministically, then execute the swap through KeeperHub, with a receipt you can check on chain.
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](./LICENSE)
-[![Uniswap V4](https://img.shields.io/badge/Uniswap-V4-ff007a.svg)](https://docs.uniswap.org/contracts/v4/overview)
-[![Chains](https://img.shields.io/badge/chains-7-8b5cf6.svg)](#chains)
-[![ethers](https://img.shields.io/badge/ethers-v6-27ae60.svg)](https://docs.ethers.org/v6/)
-[![Tests](https://img.shields.io/badge/tests-12%20passing-3fb950.svg)](#verification)
+[![Uniswap V4](https://img.shields.io/badge/Uniswap-V4-ff007a.svg)](https://developers.uniswap.org/docs/protocols/v4/deployments)
+[![KeeperHub](https://img.shields.io/badge/KeeperHub-execution-6366f1.svg)](https://keeperhub.com)
+[![Chains](https://img.shields.io/badge/chains-9-8b5cf6.svg)](#chains)
+[![Tests](https://img.shields.io/badge/tests-94%20passing-3fb950.svg)](#verification)
 
-**[Landing page](https://vasunthara.vercel.app)** · **[Live proof](./docs/PROOF.md)** · **[KeeperHub plugin](./integrations/keeperhub)**
+**[Landing page](https://vasunthara.vercel.app)** · **[Receipts](./docs/RECEIPTS.md)** · **[Live reads](./docs/PROOF.md)** · **[KeeperHub plugin](./integrations/keeperhub)**
 
 </div>
 
 ---
 
-## Why a read layer is the product
+## The gap
 
-Uniswap V4 replaces V3's per-pool contracts with a single `PoolManager` and moves per-pool logic into **hooks**: contracts attached to a pool that run before and after swap, add-liquidity and remove-liquidity.
+KeeperHub automates **47 integrations and 522 actions** across 24 chains. Ask its own catalogue what it knows about Uniswap and you get eleven actions, every one of them labelled, described and categorised **"Uniswap V3"**.
 
-A pool is identified not by an address but by a **`poolId`**, the `keccak256` of its `PoolKey`:
+```bash
+curl -H "Authorization: Bearer $KEEPERHUB_ORG_KEY" \
+  'https://app.keeperhub.com/api/mcp/schemas?includeChains=false' \
+  | jq -r '.actions | keys[] | select(startswith("uniswap/"))'
+```
+
+No `PoolManager`. No `poolId`. No hooks. Uniswap V4 has been live on nine chains for a year and the execution layer for onchain agents cannot see it.
+
+Vasunthara closes that gap.
+
+## What it does
+
+```
+        Uniswap V4                    Vasunthara                      KeeperHub
+   ┌──────────────────┐        ┌──────────────────────┐        ┌──────────────────┐
+   │ PoolManager      │        │                      │        │                  │
+   │ StateView        │──read──▶  observe by poolId   │        │  Schedule        │
+   │ PositionManager  │        │         │            │        │  Block           │
+   │ V4Quoter         │        │         ▼            │◀trigger│  Swap event      │
+   │                  │        │  decide, with guards │        │                  │
+   │                  │        │         │            │        │  Condition       │
+   │                  │        │         ▼            │        │  Circuit breaker │
+   │ PoolSwapTest     │◀─send──│  plan the calldata   │──────▶ │  web3/write      │
+   └──────────────────┘        └──────────────────────┘        └──────────────────┘
+                                                                       │
+                                                                  receipt, verified
+```
+
+Three stages, each usable on its own:
+
+1. **Observe.** Read live pool state, position state and hook-aware quotes by `poolId` across every chain V4 ships on.
+2. **Decide.** Pure functions from an observation to a decision, with guards that run first and in a fixed order. No clock, no network, no randomness, so a run replays exactly and every refusal carries its reason.
+3. **Execute.** Render the decision as a KeeperHub workflow node and let KeeperHub sign, send, retry and record it.
+
+## Proof: a limit order filled through V4
+
+Transaction [`0xd5bf7a3a…f10f88e`](https://sepolia.etherscan.io/tx/0xd5bf7a3a08d96916f794c7b8d06b2a0fa5815cef0d6e617907669c8b6f10f88e) on Ethereum Sepolia, block 11730753, receipt `0x1`.
+
+KeeperHub read `StateView.getSlot0` for a **hooked, dynamic-fee** pool and got tick `-4608`. The gate `-4608 >= -5000` held, so the order filled. The PoolManager then emitted `Swap` for that exact `poolId`:
+
+```
+poolId    0xddbb5b18fb2d4c61002baf6256e2317b44cfd0b55e992414f8acff9f72c94e8c
+amount0   -10000000000000      0.00001 ETH in
+amount1    6276834406909       KHACN out
+tick      -4608  ->  -4648
+```
+
+Those are the same numbers an `eth_call` simulation returned before anything was sent, to the wei.
+
+**One thing to be clear about.** KeeperHub relays writes and sponsors the gas, so the explorer shows a KeeperHub relayer as `from` and its executor contract as `to`, never our wallet and never Uniswap. The proof that a specific V4 pool was traded is the emitted `Swap` event, not the sender column. [`docs/RECEIPTS.md`](./docs/RECEIPTS.md) shows how to check it yourself.
+
+## Why a read layer comes first
+
+V4 replaces V3's per-pool contracts with one `PoolManager` and moves pool logic into **hooks**. A pool is identified not by an address but by a **`poolId`**:
 
 ```
 poolId = keccak256(abi.encode(currency0, currency1, fee, tickSpacing, hooks))
 ```
 
-Because the **`hooks` address is part of that key**, a hooked pool and an otherwise identical no-hook pool are two different pools.
-
-So the first thing any deterministic V4 hook strategy needs, whether it is a limit order that fires when the tick crosses a level, an LP position that rebalances when it drifts out of range, or a fee-compounding job, is to **read live pool state and position state keyed by `poolId` and token id, including which hook a position sits behind.** That is exactly what Vasunthara provides.
-
-## What it reads
-
-Three canonical V4 lens contracts. Reads only: no signer, no gas, no writes.
+The **`hooks` address is part of that key**, so a hooked pool and an otherwise identical pool with no hook are two different pools with two different ids. Any V4 automation is therefore a read problem before it is an execution problem. A workflow that hardcodes a pool address is automating nothing.
 
 | Contract | Reads | Powers |
 | --- | --- | --- |
-| **StateView** | `getSlot0` (price / tick / fee), `getLiquidity`, `getFeeGrowthGlobals`, `getTickLiquidity`, `getPositionInfo` | gate a limit order on the tick, an exit on liquidity draining, a compound on fee growth |
-| **PositionManager** | `getPositionLiquidity`, `getPoolAndPositionInfo` (returns the `PoolKey`, **including its `hooks`**), `ownerOf`, `nextTokenId` | know which hooked pool and range a position sits in before rebalancing |
-| **V4Quoter** | `quoteExactInputSingle`, `quoteExactOutputSingle` (**hook-aware**, `hookData` forwarded to the hook) | price a fill against the exact hooked pool it will execute in |
+| **StateView** | `getSlot0`, `getLiquidity`, `getFeeGrowthGlobals`, `getFeeGrowthInside`, `getTickLiquidity`, `getPositionInfo` | gate a limit order on the tick, an exit on liquidity draining, a compound on fees actually owed |
+| **PositionManager** | `getPositionLiquidity`, `getPoolAndPositionInfo` (returns the `PoolKey`, **hook included**), `ownerOf`, `nextTokenId` | know which hooked pool and range a position sits in before rebalancing |
+| **V4Quoter** | `quoteExactInputSingle`, `quoteExactOutputSingle` (**hook-aware**, `hookData` forwarded) | price a fill against the exact hooked pool it will execute in |
 
-> Writes (`swap`, `modifyLiquidity`) go through the `PoolManager` unlock callback or the Universal Router with an encoded action plan, a separate calldata surface. Vasunthara is the read and quote foundation those actions are built on.
+## The three strategies
 
-## Install
+Each is a pure function. Each ships as a KeeperHub workflow builder.
+
+**Limit order.** Fires when the tick crosses a level. Price is currency1 per currency0 and equals `1.0001^tick`, so selling currency0 waits for the tick to rise to the trigger and selling currency1 waits for it to fall. Getting that backwards silently inverts the order, so it is derived rather than supplied.
+
+**LP rebalance.** Fires when a position leaves its range by more than a tolerance. The tolerance is hysteresis, not fussiness: without it a tick resting on the boundary rebalances every block and pays fees to stand still.
+
+**Fee compounding.** Gates on fees actually owed, using Uniswap's own formula:
+
+```
+owed = liquidity * (feeGrowthInsideNow - feeGrowthInsideLast) / 2^128
+```
+
+That subtraction **wraps**. Fee growth accumulators are unsigned and are allowed to overflow, so a plain subtraction goes negative across a wrap and reads as "no fees earned" at exactly the moment the most were earned. Vasunthara takes the delta mod 2^256. A test proves the naive version fails.
+
+## Guards, which run before any strategy
+
+The expensive failures in automated DeFi are rarely wrong maths. They are acting on a reading that was already stale, on a pool too thin to fill or through a hook that moved the fee after the order was written.
+
+```ts
+const guards = {
+  maxObservationAgeSec: 60,      // reject a stale reading or one from the future
+  minPoolLiquidity: 10n ** 15n,  // refuse a pool too thin to fill
+  maxLpFeeHundredthsBip: 3000,   // refuse a dynamic-fee hook that raised the fee
+};
+```
+
+Guards run first and in a fixed order, so a skip always carries the first reason that applied rather than whichever check happened to run. Every decision carries a stable `code` and the numbers behind it:
+
+```ts
+{ act: false, code: "stale-observation",
+  reason: "observation is 120s old, limit is 60s",
+  evidence: { poolId: "0xddbb…", tick: "-4608", ageSec: "120", … } }
+```
+
+## Usage
 
 ```bash
 npm install vasunthara ethers
 ```
 
-`ethers` v6 is a peer dependency.
-
-## Usage
+### Watch a pool
 
 ```ts
 import { JsonRpcProvider } from "ethers";
 import { VasuntharaReader, derivePoolId } from "vasunthara";
 
-const provider = new JsonRpcProvider("https://ethereum-rpc.publicnode.com");
-const reader = new VasuntharaReader(provider, 1); // Ethereum
-
-// 1. Derive a poolId from a PoolKey (the hook is part of the identity)
-const poolId = derivePoolId({
-  currency0: "0x0000000000000000000000000000000000000000", // native ETH
-  currency1: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
-  fee: 500,
-  tickSpacing: 10,
-  hooks: "0x0000000000000000000000000000000000000000",
-});
-
-// 2. Monitor the pool  ->  gate a limit order / rebalance on the tick
-const { tick, sqrtPriceX96, lpFee } = await reader.getSlot0(poolId);
-
-// 3. Inspect a position and the hook it sits behind  ->  rebalance / compound
-const pos = await reader.getPoolAndPositionInfo(408_000n);
-console.log(pos.poolKey.hooks, pos.hasHook, pos.dynamicFee);
-
-// 4. Price a swap through a specific hooked pool  ->  a limit-order fill
-const quote = await reader.quoteExactInputSingle(
-  poolKey,
-  true,        // zeroForOne
-  10n ** 18n,  // 1 ETH
-  "0x",        // hookData forwarded to the hook
+const reader = new VasuntharaReader(
+  new JsonRpcProvider("https://ethereum-sepolia-rpc.publicnode.com"),
+  11155111,
 );
-console.log(quote.amount, quote.gasEstimate);
+
+const poolId = derivePoolId(poolKey);          // the hook is part of the identity
+const { tick, lpFee } = await reader.getSlot0(poolId);
 ```
 
-### A limit-order trigger, end to end
+### Decide
 
 ```ts
-// Fire when ETH/USDC crosses tick -197000, priced against the hooked pool.
-const poolId = derivePoolId(poolKey);
-const { tick } = await reader.getSlot0(poolId);
+import { decideLimitOrder } from "vasunthara";
 
-if (tick >= -197_000) {
-  const quote = await reader.quoteExactInputSingle(poolKey, true, amountIn, hookData);
-  // hand `quote.amount` to your executor as the minimum-out for the fill
+const decision = decideLimitOrder(observation, config, quotedAmountOut, now);
+if (!decision.act) {
+  console.log(decision.code, decision.reason, decision.evidence);
 }
 ```
 
-## Live proof
+### Execute through KeeperHub
 
-Vasunthara ships a proof CLI that reads **real** V4 state over public RPC:
+```ts
+import {
+  KeeperHubClient, buildTickCrossWorkflow, planExactInputSwap, swapNode,
+} from "vasunthara";
 
-```bash
-npm run proof            # full sweep on Ethereum (chain 1)
-npm run proof -- 8453    # Base
-npm run proof -- all     # poolManager() liveness on all 7 chains
+const plan = planExactInputSwap({
+  chainId: 11155111,
+  poolKey,
+  inputCurrency: poolKey.currency0,
+  amountIn: 10n ** 13n,
+});
+
+const workflow = buildTickCrossWorkflow({
+  name: "v4-limit-order",
+  chainId: 11155111,
+  poolKey,
+  comparison: ">=",
+  triggerTick: -5000,
+  trigger: { kind: "schedule", cron: "*/5 * * * *" },
+  action: swapNode({ id: "v4-swap", label: "V4 Swap", description: "fill", plan, x: 816 }),
+});
+
+const client = new KeeperHubClient({ apiKey: process.env.KEEPERHUB_ORG_KEY });
+const id = await client.createWorkflow(workflow);
+const result = await client.run(id, {}, "limit-order-001");
+
+console.log(result.transactionHashes);   // verified receipts, with block and gas
 ```
 
-It prints live `getSlot0` / `getLiquidity` on the ETH/USDC pool, a hook-aware quote, and scans recent positions for **real hooked pools**, printing each one's hook address and liquidity. A captured run lives in [`docs/PROOF.md`](./docs/PROOF.md). For example, on mainnet:
+### Wake on the swap instead of polling
 
+One `PoolManager` serves every pool on a chain and emits `Swap` with the `poolId` as its first indexed topic. So a workflow can wake on the swap itself and read the post-swap tick, price and liquidity out of the event with no extra RPC call:
+
+```ts
+buildSwapEventWorkflow({
+  name: "v4-swap-driven",
+  chainId: 11155111,
+  poolKey,
+  extraCondition: "{{@trigger-1:Trigger.args.tick}} <= -5000",
+  action: swapNode({ /* … */ }),
+});
 ```
-StateView.poolManager() -> 0x000000000004444c5dc75cB358380D2e3dE08A90  (match)
-getSlot0(ETH/USDC 0.05%) -> tick -198070, lpFee 500
-quoteExactInputSingle(1 ETH -> USDC) -> ~2500 USDC
-HOOKED position #408579 -> hook 0xbf98..BEC4, dynamic-fee, liquidity 289602464346483
-```
+
+The first Condition narrows the PoolManager-wide stream to one pool. That filter is not optional. A test pins it: without it the workflow acts on strangers' pools.
 
 ## Chains
 
-Vasunthara ships lens addresses for seven chains. V4 does **not** reuse one address across chains, so each is listed explicitly in [`src/deployments.ts`](./src/deployments.ts), sourced from the [Uniswap v4 deployments page](https://docs.uniswap.org/contracts/v4/deployments).
+Nine chains, every lens address verified live. On each one StateView, PositionManager and V4Quoter all return the same `poolManager()`, the address the Uniswap deployments page lists.
 
-| Chain | ID | Chain | ID |
-| --- | --- | --- | --- |
-| Ethereum | 1 | Polygon | 137 |
-| Base | 8453 | Unichain | 130 |
-| Arbitrum One | 42161 | Ethereum Sepolia | 11155111 |
-| Optimism | 10 | | |
+| Chain | ID | | Chain | ID |
+| --- | --- | --- | --- | --- |
+| Ethereum | 1 | | Unichain | 130 |
+| Base | 8453 | | Polygon | 137 |
+| Arbitrum One | 42161 | | Ethereum Sepolia | 11155111 |
+| Optimism | 10 | | Base Sepolia | 84532 |
+| | | | Arbitrum Sepolia | 421614 |
+
+The three testnets are where both KeeperHub and V4 operate, so they are where this executes. `KEEPERHUB_CHAINS` and `KEEPERHUB_TESTNETS` are exported, because the intersection is a fact about the code rather than a line in a README.
+
+Unichain Sepolia is deliberately absent. KeeperHub does not carry the chain, Uniswap's docs page and the `Uniswap/contracts` repo publish two different V4 deployments for it. Neither has had a pool initialised in the last 1.5M blocks. A test pins its absence.
 
 ## Verification
 
 ```bash
-npm run typecheck   # tsc --noEmit           -> clean
-npm test            # vitest                 -> 12 passing
-npm run lint        # biome                  -> clean
-npm run proof       # live reads over RPC
+npm run typecheck   # tsc --noEmit                -> clean
+npm test            # vitest                      -> 94 passing
+npm run lint        # biome                       -> clean, 20 files
+npm run proof       # live reads over public RPC
+npm run proof -- all
 ```
 
-The tests are **deterministic** (no network): they pin the on-chain function selectors (`getSlot0` `0xc815641c`, `getPoolAndPositionInfo` `0x7ba03aad`, `quoteExactInputSingle` `0xaa9d21cb`), assert the ETH/USDC `poolId` derivation, and decode a recorded live `getSlot0` return.
+Tests are deterministic and need no network. They pin the on-chain selectors (`getSlot0` `0xc815641c`, `getPoolAndPositionInfo` `0x7ba03aad`, `quoteExactInputSingle` `0xaa9d21cb`, `PoolSwapTest.swap` `0x2229d0b4`), the `Swap` event topic (`0x40e9cecb…d7112f`) against real logs, the `poolId` derivation plus the arithmetic that is easy to get wrong.
 
-## KeeperHub integration
+Read biome's `Checked N files` count rather than its exit code. It silently skips paths, so a clean run can mean nothing was read.
 
-[`integrations/keeperhub/`](./integrations/keeperhub) carries the same read layer as a **KeeperHub ABI-driven protocol plugin** (`slug: uniswap-v4`, three contracts, thirteen actions), so the reads become **no-code workflow actions** in KeeperHub's visual builder. See that directory's README.
+## KeeperHub plugin
+
+[`integrations/keeperhub/`](./integrations/keeperhub) carries the same read layer as a KeeperHub ABI-driven protocol (`slug: uniswap-v4`, three contracts, thirteen actions), so the reads become no-code actions in the visual builder for everyone, not just for this project.
 
 ## Landing page
 
-A Vercel-deployable landing page with animated explanations of the project and usage lives in [`site/`](./site).
-
-```bash
-cd site
-npm install
-npm run dev      # http://localhost:3000
-npm run build    # static export to site/out, ready for Vercel
-```
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fzkasuran%2Fvasunthara&root-directory=site)
+An animated explainer lives in [`site/`](./site) and deploys to Vercel as a static export.
 
 ## License
 
@@ -167,5 +251,5 @@ Apache-2.0.
 ---
 
 <div align="center">
-<sub>AI assistance (Kiro) was used to develop this project. Design, review and on-chain verification are the author's.</sub>
+<sub>AI assistance was used to develop this project. The design, the review and every on-chain verification are the author's. Contract addresses, ABI selectors, event topics and opcode values in this repository were read from primary sources and then confirmed against deployed bytecode before shipping.</sub>
 </div>
