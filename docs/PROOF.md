@@ -3,6 +3,21 @@
 Output of `npm run proof` (chain 1) and `npm run proof -- all`, reading real
 Uniswap V4 state over public RPC through the shipped lens addresses.
 
+**This is a capture, taken 2026-09-18.** Pool state moves, so the figures below
+are a record of one moment rather than a current reading. Two things have changed
+since, both worth stating rather than quietly editing a pasted capture:
+
+- **Position #408579 has been burned.** `getPoolAndPositionInfo` now returns a
+  zero PoolKey and a zero `info` word for it. That call does not revert, so a
+  reader that does not check for an empty word would report range `[0, 0)` as
+  real. The library returns `exists: false` for exactly this case, and a test
+  pins it.
+- The ETH/USDC tick and the quote have moved with the market.
+
+For a reading that is current rather than captured, the
+[live lab](https://vasunthara.vercel.app) performs these same reads in the
+browser when you open it.
+
 ```
 
 === Ethereum (chain 1) ===

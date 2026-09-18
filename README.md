@@ -12,9 +12,9 @@ Watch live V4 pool and position state by `poolId`, decide deterministically, the
 [![Uniswap V4](https://img.shields.io/badge/Uniswap-V4-ff007a.svg)](https://developers.uniswap.org/docs/protocols/v4/deployments)
 [![KeeperHub](https://img.shields.io/badge/KeeperHub-execution-6366f1.svg)](https://keeperhub.com)
 [![Chains](https://img.shields.io/badge/chains-9-8b5cf6.svg)](#chains)
-[![Tests](https://img.shields.io/badge/tests-94%20passing-3fb950.svg)](#verification)
+[![Tests](https://img.shields.io/badge/tests-158%20passing-3fb950.svg)](#verification)
 
-**[Landing page](https://vasunthara.vercel.app)** · **[Receipts](./docs/RECEIPTS.md)** · **[Live reads](./docs/PROOF.md)** · **[KeeperHub plugin](./integrations/keeperhub)**
+**[Live lab](https://vasunthara.vercel.app)** · **[Receipts](./docs/RECEIPTS.md)** · **[Live reads](./docs/PROOF.md)** · **[KeeperHub plugin](./integrations/keeperhub)**
 
 </div>
 
@@ -88,7 +88,7 @@ The **`hooks` address is part of that key**, so a hooked pool and an otherwise i
 | Contract | Reads | Powers |
 | --- | --- | --- |
 | **StateView** | `getSlot0`, `getLiquidity`, `getFeeGrowthGlobals`, `getFeeGrowthInside`, `getTickLiquidity`, `getPositionInfo` | gate a limit order on the tick, an exit on liquidity draining, a compound on fees actually owed |
-| **PositionManager** | `getPositionLiquidity`, `getPoolAndPositionInfo` (returns the `PoolKey`, **hook included**), `ownerOf`, `nextTokenId` | know which hooked pool and range a position sits in before rebalancing |
+| **PositionManager** | `getPositionLiquidity`, `getPoolAndPositionInfo` (returns the `PoolKey`, **hook included**, plus the tick range unpacked from the packed `info` word), `ownerOf`, `nextTokenId` | know which hooked pool and range a position sits in before rebalancing |
 | **V4Quoter** | `quoteExactInputSingle`, `quoteExactOutputSingle` (**hook-aware**, `hookData` forwarded) | price a fill against the exact hooked pool it will execute in |
 
 ## The three strategies
@@ -240,13 +240,18 @@ Unichain Sepolia is deliberately absent. KeeperHub does not carry the chain, Uni
 
 ```bash
 npm run typecheck   # tsc --noEmit                -> clean
-npm test            # vitest                      -> 94 passing
-npm run lint        # biome                       -> clean, 20 files
+npm test            # vitest                      -> 158 passing
+npm run lint        # biome                       -> clean, 29 files
+npm run check:site  # the site's vendored copy is in sync with src/
+npm run verify      # all four of the above, in order
+npm run build       # tsc -> dist, ESM plus .d.ts
 npm run proof       # live reads over public RPC
 npm run proof -- all
 ```
 
 Tests are deterministic and need no network. They pin the on-chain selectors (`getSlot0` `0xc815641c`, `getPoolAndPositionInfo` `0x7ba03aad`, `quoteExactInputSingle` `0xaa9d21cb`, `PoolSwapTest.swap` `0x2229d0b4`), the `Swap` event topic (`0x40e9cecb…d7112f`) against real logs, the `poolId` derivation plus the arithmetic that is easy to get wrong.
+
+Where a test needs real chain data it uses a captured fixture rather than a network call, so the pinning is against the deployed contracts and still runs offline. The `Swap` decoding tests use the exact log emitted by the transaction in [`docs/RECEIPTS.md`](./docs/RECEIPTS.md), and the `PositionInfo` layout tests use the packed words returned by four live mainnet positions.
 
 Read biome's `Checked N files` count rather than its exit code. It silently skips paths, so a clean run can mean nothing was read.
 
@@ -254,9 +259,19 @@ Read biome's `Checked N files` count rather than its exit code. It silently skip
 
 [`integrations/keeperhub/`](./integrations/keeperhub) carries the same read layer as a KeeperHub ABI-driven protocol (`slug: uniswap-v4`, three contracts, thirteen actions), so the reads become no-code actions in the visual builder for everyone, not just for this project.
 
-## Landing page
+## The live lab
 
-An animated explainer lives in [`site/`](./site) and deploys to Vercel as a static export.
+[`site/`](./site) is not a brochure. It runs this library in the browser against public RPC, with no backend and no key:
+
+- **Derive** a `poolId` from a `PoolKey` as you type, next to the id the same pair produces with the hook removed. Two ids, two pools.
+- **Read** a live pool: tick, price adjusted for both tokens' decimals, liquidity, the fee the hook actually set this block, and a hook-aware quote from `V4Quoter`.
+- **Decide** with the real exported strategy functions against that live observation, and watch a fill become a refusal with the evidence that caused it when you claim the reading is stale.
+- **Inspect** a position, including the tick range unpacked from PositionManager's packed `info` word, then a rebalance decision against the position's own pool.
+- **Verify** the receipts. It fetches a transaction from a public RPC, finds the `Swap` log on the PoolManager and matches it against a derived `poolId`. Negative cases ship alongside the positive ones: real KeeperHub writes from this project that were not V4 swaps, which it declines to count.
+
+The page can read and verify, and nothing else. Executing needs a signer, and that lives in KeeperHub, so a static export has no secret to leak.
+
+`site/lib/vasunthara/` is generated from `src/` by `npm run sync:site`, because Vercel builds the site with `site/` as its root directory and cannot reach outside it without a project setting a fresh clone would lack. `npm run check:site` fails if the copy drifts.
 
 ## License
 
