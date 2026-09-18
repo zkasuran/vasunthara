@@ -206,6 +206,20 @@ buildSwapEventWorkflow({
 
 The first Condition narrows the PoolManager-wide stream to one pool. That filter is not optional. A test pins it: without it the workflow acts on strangers' pools.
 
+## Run it
+
+```bash
+npm install
+npm run demo                  # observe, decide, dry run. Sends nothing.
+npm run demo -- --execute     # also execute through KeeperHub
+npm run demo -- --chain 84532 # Base Sepolia
+```
+
+The dry run is the default, because a demo that spends by accident is a bad
+demo. `--execute` needs `KEEPERHUB_ORG_KEY` in the environment, and it prints
+the transaction hash, then re-fetches the receipt from a public RPC and checks
+that the PoolManager emitted `Swap` for the expected `poolId`.
+
 ## Chains
 
 Nine chains, every lens address verified live. On each one StateView, PositionManager and V4Quoter all return the same `poolManager()`, the address the Uniswap deployments page lists.

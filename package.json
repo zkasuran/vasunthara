@@ -31,7 +31,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "proof": "tsx src/cli.ts",
-    "lint": "biome check ."
+    "lint": "biome check .",
+    "demo": "tsx src/demo.ts"
   },
   "peerDependencies": {
     "ethers": "^6.0.0"

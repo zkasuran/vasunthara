@@ -103,6 +103,40 @@ topic is the Swap hash above and whose second topic is the poolId.
 
 ---
 
+## The same thing, as one reproducible command
+
+`npm run demo -- --execute` runs the whole pipeline and prints every step:
+observe the live pool, decide, dry run, execute, then verify the receipt
+against the chain rather than against KeeperHub.
+
+**Transaction** [`0x5fcdb28d1fee08c7888213f5eef1135e82d917fdb1d279cab141e1aff6a6e5c1`](https://sepolia.etherscan.io/tx/0x5fcdb28d1fee08c7888213f5eef1135e82d917fdb1d279cab141e1aff6a6e5c1)
+
+| | |
+| --- | --- |
+| Chain | Ethereum Sepolia (11155111) |
+| Block | 11730849 |
+| Receipt status | success |
+| Gas used | 142,531 |
+| KeeperHub workflow | `3ze3pkuq5ca3jfivl81nr` |
+| KeeperHub execution | `p0bpwl3of0loy4wu9hy7e` |
+
+The demo's own verification step, printed at the end of that run:
+
+```
+status       success
+from         0x809D8252aa4f9b8F7D9bE7213855b289fe7D0444   (a KeeperHub relayer, not our wallet)
+logs         3
+V4 Swap      found, poolId matches: 0xddbb5b18fb2d4c61002baf6256e2317b44cfd0b55e992414f8acff9f72c94e8c
+
+tick         -4648 -> -4687
+```
+
+Run it without `--execute` first. The default is a dry run that reads, decides
+and simulates without signing anything, because a demo that spends by accident
+is a bad demo.
+
+---
+
 ## Reading V4 state through KeeperHub
 
 **Workflow** `imrvaffxear02tfxnow6w`
