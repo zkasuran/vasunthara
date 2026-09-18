@@ -1,8 +1,17 @@
-// Uniswap V4 lens deployment addresses, from
-// docs.uniswap.org/contracts/v4/deployments. V4 does NOT reuse one address
-// across chains, so each is listed explicitly. Verified against the
-// deployments page on 2026-09-18; StateView.poolManager() was called live on
-// Ethereum, Base and Sepolia and returns the canonical PoolManager per chain.
+// Uniswap V4 lens deployment addresses, from the Uniswap deployments page
+// (docs.uniswap.org/contracts/v4/deployments now 301s to
+// developers.uniswap.org/docs/protocols/v4/deployments) and cross-checked
+// against the machine-readable feed at developers.uniswap.org/deployments.json.
+// V4 does NOT reuse one address across chains, so each is listed explicitly.
+//
+// Every address here was confirmed live over public RPC on 2026-09-18: on each
+// chain StateView, PositionManager and V4Quoter all return the same
+// poolManager(), and it is the PoolManager the deployments page lists.
+//
+// Unichain Sepolia (1301) is deliberately absent. KeeperHub does not support
+// that chain, the docs page and the Uniswap/contracts repo publish two
+// different V4 deployments for it, and neither has had a pool initialised in
+// the last 1.5M blocks.
 
 export type ChainId = number;
 
@@ -90,7 +99,35 @@ export const DEPLOYMENTS: Readonly<Record<ChainId, V4Deployment>> = {
     rpcUrl: "https://ethereum-sepolia-rpc.publicnode.com",
     explorer: "https://sepolia.etherscan.io/address/",
   },
+  84532: {
+    chainId: 84532,
+    name: "Base Sepolia",
+    poolManager: "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
+    stateView: "0x571291b572ed32ce6751a2Cb2486EbEe8DEfB9B4",
+    positionManager: "0x4B2C77d209D3405F41a037Ec6c77F7F5b8e2ca80",
+    quoter: "0x4A6513c898fe1B2d0E78d3b0e0A4a151589B1cBa",
+    rpcUrl: "https://base-sepolia-rpc.publicnode.com",
+    explorer: "https://sepolia.basescan.org/address/",
+  },
+  421614: {
+    chainId: 421614,
+    name: "Arbitrum Sepolia",
+    poolManager: "0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317",
+    stateView: "0x9D467FA9062b6e9B1a46E26007aD82db116c67cB",
+    positionManager: "0xAc631556d3d4019C95769033B5E719dD77124BAc",
+    quoter: "0x7dE51022d70A725b508085468052E25e22b5c4c9",
+    rpcUrl: "https://arbitrum-sepolia-rpc.publicnode.com",
+    explorer: "https://sepolia.arbiscan.io/address/",
+  },
 } as const;
+
+/** Chains KeeperHub can execute on that also carry a Uniswap V4 deployment. */
+export const KEEPERHUB_CHAINS: readonly ChainId[] = [
+  1, 10, 137, 8453, 42161, 11155111, 84532, 421614,
+];
+
+/** The subset of those that are testnets, where this project executes. */
+export const KEEPERHUB_TESTNETS: readonly ChainId[] = [11155111, 84532, 421614];
 
 export const SUPPORTED_CHAINS: readonly ChainId[] =
   Object.keys(DEPLOYMENTS).map(Number);

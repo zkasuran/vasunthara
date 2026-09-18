@@ -10,6 +10,8 @@ export {
   type ChainId,
   DEPLOYMENTS,
   getDeployment,
+  KEEPERHUB_CHAINS,
+  KEEPERHUB_TESTNETS,
   SUPPORTED_CHAINS,
   type V4Deployment,
 } from "./deployments.js";

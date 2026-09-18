@@ -8,6 +8,8 @@ import {
 import {
   DEPLOYMENTS,
   getDeployment,
+  KEEPERHUB_CHAINS,
+  KEEPERHUB_TESTNETS,
   SUPPORTED_CHAINS,
 } from "../src/deployments.js";
 import {
@@ -22,10 +24,49 @@ const ETH = "0x0000000000000000000000000000000000000000";
 const USDC = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
 
 describe("deployments", () => {
-  it("covers the seven shipped chains", () => {
+  it("covers the nine shipped chains", () => {
     expect([...SUPPORTED_CHAINS].sort((a, b) => a - b)).toEqual([
-      1, 10, 130, 137, 8453, 42161, 11155111,
+      1, 10, 130, 137, 8453, 42161, 84532, 421614, 11155111,
     ]);
+  });
+
+  it("pins the verified testnet lens addresses", () => {
+    // Confirmed live on 2026-09-18: on each chain StateView, PositionManager
+    // and V4Quoter all return this same poolManager().
+    expect(DEPLOYMENTS[84532].poolManager).toBe(
+      "0x05E73354cFDd6745C338b50BcFDfA3Aa6fA03408",
+    );
+    expect(DEPLOYMENTS[84532].stateView).toBe(
+      "0x571291b572ed32ce6751a2Cb2486EbEe8DEfB9B4",
+    );
+    expect(DEPLOYMENTS[421614].poolManager).toBe(
+      "0xFB3e0C6F74eB1a21CC1Da29aeC80D2Dfe6C9a317",
+    );
+    expect(DEPLOYMENTS[11155111].poolManager).toBe(
+      "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
+    );
+  });
+
+  it("no two chains share a PoolManager, because V4 does not reuse one", () => {
+    const seen = new Set<string>();
+    for (const chainId of SUPPORTED_CHAINS) {
+      const pm = getDeployment(chainId).poolManager.toLowerCase();
+      expect(seen.has(pm), `${chainId} reuses ${pm}`).toBe(false);
+      seen.add(pm);
+    }
+  });
+
+  it("every KeeperHub chain has a V4 deployment shipped", () => {
+    for (const chainId of KEEPERHUB_CHAINS) {
+      expect(() => getDeployment(chainId), String(chainId)).not.toThrow();
+    }
+    for (const chainId of KEEPERHUB_TESTNETS) {
+      expect(KEEPERHUB_CHAINS).toContain(chainId);
+    }
+  });
+
+  it("does not ship Unichain Sepolia, whose sources disagree", () => {
+    expect(SUPPORTED_CHAINS).not.toContain(1301);
   });
 
   it("every deployment address is a valid checksummed address", () => {
