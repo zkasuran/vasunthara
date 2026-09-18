@@ -2,6 +2,7 @@
 // The deterministic read layer for automating Uniswap V4 hook strategies.
 
 export {
+  POOL_MANAGER_EVENTS_ABI,
   POSITION_MANAGER_ABI,
   QUOTER_ABI,
   STATE_VIEW_ABI,
@@ -15,6 +16,17 @@ export {
   SUPPORTED_CHAINS,
   type V4Deployment,
 } from "./deployments.js";
+export {
+  type ExecutionResult,
+  KeeperHubClient,
+  KeeperHubError,
+  type KeeperHubOptions,
+  receiptLinks,
+  type TransactionReceipt,
+  type WorkflowDefinition,
+  type WorkflowEdge,
+  type WorkflowNode,
+} from "./keeperhub.js";
 export {
   DYNAMIC_FEE_FLAG,
   derivePoolId,
@@ -61,3 +73,27 @@ export {
   type SkipCode,
   wrappingDelta,
 } from "./strategy.js";
+export {
+  exactInputAmount,
+  exactOutputAmount,
+  isNativeCurrency,
+  MAX_SQRT_PRICE,
+  MIN_SQRT_PRICE,
+  POOL_MODIFY_LIQUIDITY_TEST,
+  POOL_SWAP_TEST,
+  POOL_SWAP_TEST_ABI,
+  planExactInputSwap,
+  swapNode,
+  swapPriceLimit,
+  type V4SwapPlan,
+} from "./swap.js";
+export {
+  buildFeeGrowthWorkflow,
+  buildPositionDriftWorkflow,
+  buildSwapEventWorkflow,
+  buildTickCrossWorkflow,
+  jsonAbiFragment,
+  jsonEventAbi,
+  type TriggerSpec,
+  writeNode,
+} from "./workflows.js";
