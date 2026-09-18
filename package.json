@@ -4,10 +4,10 @@
   "description": "Vasunthara - read the pool, rule the hook. The deterministic read layer for automating Uniswap V4 hook strategies: pool state, position state and hook-aware quotes by poolId, across every chain V4 is deployed on.",
   "type": "module",
   "license": "Apache-2.0",
-  "homepage": "https://github.com/asuran/vasunthara",
+  "homepage": "https://github.com/zkasuran/vasunthara",
   "repository": {
     "type": "git",
-    "url": "https://github.com/asuran/vasunthara.git"
+    "url": "https://github.com/zkasuran/vasunthara.git"
   },
   "keywords": [
     "uniswap",
