@@ -42,17 +42,17 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
     for (const action of uniswapV4Def.actions) {
       expect(
         contractKeys.has(action.contract),
-        `action "${action.slug}" references unknown contract "${action.contract}"`
+        `action "${action.slug}" references unknown contract "${action.contract}"`,
       ).toBe(true);
     }
   });
 
   it("is entirely read-only: no write actions, no payable", () => {
     expect(uniswapV4Def.actions.filter((a) => a.type === "write")).toHaveLength(
-      0
+      0,
     );
     expect(uniswapV4Def.actions.every((a) => a.payable === undefined)).toBe(
-      true
+      true,
     );
   });
 
@@ -60,7 +60,7 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
     for (const action of uniswapV4Def.actions) {
       expect(
         action.outputs?.length,
-        `read action "${action.slug}" must have outputs`
+        `read action "${action.slug}" must have outputs`,
       ).toBeGreaterThan(0);
     }
   });
@@ -77,7 +77,7 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
     for (const key of Object.keys(uniswapV4Def.contracts)) {
       expect(
         Object.keys(uniswapV4Def.contracts[key].addresses).sort(),
-        `contract "${key}" chain set`
+        `contract "${key}" chain set`,
       ).toEqual([...EXPECTED_CHAINS].sort());
     }
   });
@@ -86,7 +86,7 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
     for (const [key, contract] of Object.entries(uniswapV4Def.contracts)) {
       for (const [chain, address] of Object.entries(contract.addresses)) {
         expect(address, `contract "${key}" chain "${chain}"`).toMatch(
-          HEX_ADDRESS_REGEX
+          HEX_ADDRESS_REGEX,
         );
       }
     }
@@ -94,17 +94,17 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
 
   it("pins the verified mainnet addresses", () => {
     expect(uniswapV4Def.contracts.stateView.addresses["1"]).toBe(
-      MAINNET.stateView
+      MAINNET.stateView,
     );
     expect(uniswapV4Def.contracts.positionManager.addresses["1"]).toBe(
-      MAINNET.positionManager
+      MAINNET.positionManager,
     );
     expect(uniswapV4Def.contracts.quoter.addresses["1"]).toBe(MAINNET.quoter);
   });
 
   it("Sepolia StateView matches the deployment table", () => {
     expect(uniswapV4Def.contracts.stateView.addresses["11155111"]).toBe(
-      "0xe1dd9c3fa50edb962e442f60dfbc432e24537e4c"
+      "0xe1dd9c3fa50edb962e442f60dfbc432e24537e4c",
     );
   });
 
@@ -145,7 +145,7 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
 
   it("get-pool-and-position-info returns the PoolKey tuple (with hooks) and info", () => {
     const info = uniswapV4Def.actions.find(
-      (a) => a.slug === "get-pool-and-position-info"
+      (a) => a.slug === "get-pool-and-position-info",
     );
     expect(info?.function).toBe("getPoolAndPositionInfo");
     expect(info?.inputs[0].name).toBe("tokenId");
@@ -233,7 +233,7 @@ describe("Uniswap V4 Protocol Definition (ABI-driven)", () => {
 
   it("PositionManager ABI encodes getPoolAndPositionInfo to 0x7ba03aad", () => {
     const iface = new Interface(
-      uniswapV4Def.contracts.positionManager.abi as string
+      uniswapV4Def.contracts.positionManager.abi as string,
     );
     const data = iface.encodeFunctionData("getPoolAndPositionInfo", [
       BigInt("408000"),
